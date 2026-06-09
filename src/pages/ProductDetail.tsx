@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { PRODUCTS_DATA } from '../data/products';
+import { mercadoPagoService } from '../services/MercadoPago'; // <- Seu serviço importado limpo
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -12,6 +13,9 @@ export function ProductDetail() {
   // 2. Controla apenas a imagem que o usuário CLICOU explicitamente
   const [userSelectedImage, setUserSelectedImage] = useState<string | null>(null);
   const [prevId, setPrevId] = useState(id);
+  
+  // Estado para travar o botão e evitar duplo clique no envio da API
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // 3. Se o ID da URL mudou, resetamos a seleção do usuário direto no fluxo de renderização
   if (id !== prevId) {
@@ -28,9 +32,26 @@ export function ProductDetail() {
   // Configuração simplificada do WhatsApp da Oficina
   const WHATSAPP_NUMBER = '5511999999999'; 
   const whatsappMessage = encodeURIComponent(
-    `Olá! Gostaria de confirmar a reserva do capacete ${product.name} (Código Único: ${product.code}). Como funciona a entrega?`
+    `Olá! Gostaria de tirar dúvidas sobre o capacete ${product.name} (Código Único: ${product.code}).`
   );
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
+
+  // Gatilho de disparo do Mercado Pago
+  const handlePayment = async () => {
+    if (isProcessing) return;
+    
+    setIsProcessing(true);
+    try {
+      await mercadoPagoService.initCheckoutPro({
+        id: product.id,
+        title: product.name,
+        price: Number(product.price)
+      });
+    } finally {
+      // Libera o botão independente de dar sucesso ou chabu
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="w-full min-h-screen bg-zinc-950 text-white py-24 select-none flex items-center">
@@ -80,7 +101,7 @@ export function ProductDetail() {
         {/* LADO DIREITO: INFORMAÇÕES TÉCNICAS E RESERVA */}
         <div className="lg:col-span-6 flex flex-col items-start w-full">
           
-          {/* Topo Isolado: Evita que o link entre no container de baixo */}
+          {/* Topo Isolado */}
           <div className="w-full flex justify-between items-baseline mb-6 border-b border-zinc-900 pb-2">
             <span className="text-xs font-black tracking-[0.3em] text-amber-500 uppercase">
               {product.tag}
@@ -98,7 +119,7 @@ export function ProductDetail() {
             {product.name}
           </h1>
 
-          {/* Bloco de Preço: Posicionamento limpo e com alta presença visual */}
+          {/* Bloco de Preço */}
           <div className="w-full flex items-baseline gap-2 pb-6 border-b border-zinc-900 mb-6">
             <span className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest mr-2">Investimento:</span>
             <div className="text-white font-black text-3xl tracking-tight flex items-baseline">
@@ -113,7 +134,7 @@ export function ProductDetail() {
             {product.desc}
           </p>
 
-          {/* Ficha Técnica: Cravada em linha única sem quebras erradas */}
+          {/* Ficha Técnica */}
           <div className="w-full flex flex-col gap-4 mb-10 border-t border-b border-zinc-900 py-6">
             {product.specs.map((spec, i) => (
               <div 
@@ -130,18 +151,32 @@ export function ProductDetail() {
             ))}
           </div>
 
-          {/* Botão de Ação Direta */}
-          <a 
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full text-center px-10 py-5 bg-white hover:bg-zinc-200 text-zinc-950 font-black uppercase tracking-widest text-xs transition-all duration-300 shadow-2xl flex items-center justify-center gap-2 group"
-          >
-            Confirmar Reserva
-            <span className="transform group-hover:translate-x-1 transition-transform duration-300 text-sm font-bold">→</span>
-          </a>
-        </div>
+          {/* AÇÕES DE ENGAJAMENTO */}
+          <div className="w-full flex flex-col gap-3">
+            {/* Botão de Disparo do Mercado Pago */}
+            <button 
+              onClick={handlePayment}
+              disabled={isProcessing}
+              className="w-full text-center px-10 py-5 bg-amber-500 hover:bg-amber-400 disabled:bg-zinc-900 disabled:text-zinc-600 font-black uppercase tracking-widest text-xs transition-all duration-300 shadow-2xl flex items-center justify-center gap-2 group text-zinc-950 disabled:border disabled:border-zinc-800"
+            >
+              {isProcessing ? 'Gerando Pedido...' : 'Comprar agora (Pix / Cartão)'}
+              {!isProcessing && (
+                <span className="transform group-hover:translate-x-1 transition-transform duration-300 text-sm font-bold">→</span>
+              )}
+            </button>
 
+            {/* Canal Secundário: WhatsApp como escape */}
+            <a 
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full text-center px-10 py-4 bg-transparent hover:bg-zinc-900 text-zinc-400 hover:text-white font-mono font-bold uppercase tracking-widest text-[10px] transition-all duration-300 border border-zinc-900 hover:border-zinc-800 flex items-center justify-center gap-2"
+            >
+              Falar com o Customizador via WhatsApp
+            </a>
+          </div>
+
+        </div>
       </div>
     </div>
   );
