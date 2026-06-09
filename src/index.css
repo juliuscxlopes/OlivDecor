@@ -1,1 +1,78 @@
+/* src/index.css */
 @import "tailwindcss";
+
+/* FIX: Envelopado na tag html para não quebrar o parser do CSS */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ==========================================================================
+   DESIGN TOKENS & PADRÕES DE LAYOUT (O "RESPIRO")
+   ========================================================================== */
+
+/* Container padrão de seção para manter o alinhamento da oficina em todas as páginas */
+.section-container {
+  @apply w-full min-h-screen flex flex-col justify-center items-center snap-start bg-zinc-950 text-white relative overflow-hidden;
+}
+
+/* Padronização de margens internas (Mobile-First) */
+.section-spacer {
+  @apply py-12 md:py-20 lg:py-28 px-6 md:px-12 max-w-7xl mx-auto w-full;
+}
+
+/* ==========================================================================
+   TIPOGRAFIA INTERATIVA (O PADRÃO DO H3)
+   ========================================================================== */
+.h3-interactive {
+  /* Estado Base */
+  @apply font-black text-2xl md:text-3xl tracking-tight uppercase italic text-zinc-300;
+  @apply relative inline-block cursor-pointer pb-1;
+  
+  /* Transição suave de cor, sublinhado e brilho */
+  transition: color 0.4s cubic-bezier(0.16, 1, 0.3, 1), text-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Linha customizada abaixo do texto (Sublinhado de Relevo) */
+.h3-interactive::after {
+  content: '';
+  @apply absolute bottom-0 left-0 w-0 h-[2px] bg-amber-500 transition-all duration-300 ease-out;
+}
+
+/* Efeito de Hover: Transição pro Laranja + Glow Ofuscado + Expansão da Linha */
+.h3-interactive:hover {
+  @apply text-amber-500;
+  /* Efeito de relevo ofuscado (glow sutil neon industrial) */
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.35); 
+}
+
+.h3-interactive:hover::after {
+  @apply w-full; /* A linha expande magneticamente */
+}
+
+/* ==========================================================================
+   KEYFRAMES DE ANIMAÇÃO EXISTENTES
+   ========================================================================== */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-delayed-1 { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.1s; }
+.animate-fade-in-delayed-2 { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.25s; }
+.animate-fade-in-delayed-3 { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.4s; }
+.animate-fade-in-delayed-4 { animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: 0.55s; }
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}

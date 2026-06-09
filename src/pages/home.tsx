@@ -1,21 +1,42 @@
-// Defina a interface aqui em cima
-interface HomeProps {
-  onOpenLogin: () => void;
-}
+// src/pages/Home.tsx
+import { Header } from '../components/Header';
+import { Frame0Hero } from '../components/home/Frame0Hero';
+import { Frame1Products } from '../components/home/FrameProducts1'; // FIX: Nome do arquivo corrigido aqui
+import { Frame2Artesao } from '../components/home/Frame2Artesao';
 
-// Use a interface para tipar o componente
-export function Home({ onOpenLogin }: HomeProps) {
+export function Home() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-      <h1 className="text-5xl font-black text-slate-900 tracking-tighter">
-        Web Appliance
-      </h1>
-      <button 
-        onClick={onOpenLogin}
-        className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-full font-bold hover:scale-105 transition-transform"
+    <main className="snap-y snap-mandatory h-screen overflow-y-scroll scroll-smooth bg-zinc-950">
+      <Header />
+
+      {/* FRAME 0: HERO */}
+      <section 
+        id="inicio" 
+        className="h-screen w-full flex flex-col justify-center items-center snap-start bg-zinc-950 relative overflow-hidden" // FIX: min-h-screen alterado para h-screen
       >
-        Acessar Plataforma
-      </button>
-    </div>
+        <Frame0Hero />
+      </section>
+
+      {/* FRAME 1: BANNER ROTATIVO (PRODUTOS) */}
+      <section 
+        id="novidades" 
+        className="h-screen w-full flex flex-col justify-center items-center snap-start bg-zinc-950 relative overflow-hidden" // FIX: min-h-screen alterado para h-screen
+      >
+        {/* Textura de Juta de fundo */}
+        <div className="absolute inset-0 opacity-10 bg-[url('/textures/juta.png')] pointer-events-none z-20"></div>
+        
+        {/* Renderiza o carrossel ocupando o frame inteiro */}
+        <Frame1Products />
+      </section>
+
+      {/* FRAME 2: O ARTESÃO */} 
+      <section 
+        id="artesao" 
+        className="h-screen w-full flex flex-col justify-center items-center snap-start bg-zinc-950 text-white relative overflow-hidden border-t border-zinc-900" // FIX: min-h-screen alterado para h-screen
+      >
+        {/* Mantém a consistência de fundo da oficina sem quebrar o snap */}
+        <Frame2Artesao />
+      </section>
+    </main>
   );
 }
