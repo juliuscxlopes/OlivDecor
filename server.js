@@ -13,7 +13,7 @@ app.post('/api/checkout', async (req, res) => {
   try {
     const { product } = req.body;
     
-    const mpResponse = await fetch('https://api.mercadopago.com/v1/checkout/preferences', {
+    const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`,
