@@ -36,45 +36,55 @@ export function ProductDetail() {
   );
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
 
-  // Gatilho de disparo do Mercado Pago
+    // Gatilho de disparo do Mercado Pago (Versão Diagnóstico)
     const handlePayment = async () => {
-      if (isProcessing) return; // Evita cliques duplos acidentais
+      console.log(' [F12 DIAGNÓSTICO]: 1. Você clicou no botão!');
+      
+      if (isProcessing) {
+        console.log(' [F12 DIAGNÓSTICO]: 1.1 Clique bloqueado porque isProcessing já é TRUE');
+        return;
+      }
       
       setIsProcessing(true);
+      console.log(' [F12 DIAGNÓSTICO]: 2. isProcessing mudou para true. Dados do produto atual:', product);
       
       try {
-        // Criamos o objeto exatamente no formato que o backend e a interface esperam
         const paymentPayload: ProductPayment = {
           id: product.id,
-          title: product.name, // ← Pega o 'name' do produto e joga na propriedade 'title'
-          price: Number(product.price) // Garante que vai como número
+          title: product.name,
+          price: Number(product.price)
         };
+        console.log(' [F12 DIAGNÓSTICO]: 3. Payload estruturado com sucesso:', paymentPayload);
 
-        // Dispara para o seu próprio servidor Express (Railway)
+        console.log(' [F12 DIAGNÓSTICO]: 4. Disparando FETCH para /api/checkout...');
         const response = await fetch('/api/checkout', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ product: paymentPayload }) // Envia o payload correto
+          body: JSON.stringify({ product: paymentPayload })
         });
 
+        console.log(' [F12 DIAGNÓSTICO]: 5. Resposta da rede recebida! HTTP Status:', response.status);
         const data = await response.json();
+        console.log(' [F12 DIAGNÓSTICO]: 6. JSON decodificado do servidor:', data);
 
         if (!response.ok) {
+          console.log(' [F12 DIAGNÓSTICO]: 6.1 Servidor respondeu com erro controlado.');
           throw new Error(data.error || 'Erro na requisição');
         }
 
-        // PULO DO GATO: Se o link direto existe, redireciona o usuário na mesma aba
         if (data.initPoint) {
+          console.log(' [F12 DIAGNÓSTICO]: 7. Link encontrado! Redirecionando para:', data.initPoint);
           window.location.href = data.initPoint;
         } else {
+          console.log(' [F12 DIAGNÓSTICO]: 7.1 Erro: data.initPoint veio vazio.');
           alert('Não foi possível gerar o link de pagamento.');
           setIsProcessing(false);
         }
 
       } catch (error) {
-        console.error('Erro ao processar o pagamento no front:', error);
+        console.error(' [F12 DIAGNÓSTICO ERRO CRÍTICO]:', error);
         alert('Erro ao conectar com o servidor de pagamentos.');
         setIsProcessing(false);
       }
