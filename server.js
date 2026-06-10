@@ -51,11 +51,10 @@ app.post('/api/checkout', async (req, res) => {
 
 // --- ENTREGA DO FRONTEND ---
 
-// Serve os arquivos estáticos da build do Vite
+// 1. Serve os arquivos estáticos da build do Vite (CSS, JS, Imagens)
 app.use(express.static('dist'));
 
-// Resguarda as rotas do React Router (F5 em qualquer página)
-app.get('.*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.resolve('dist', 'index.html'));
 });
 
