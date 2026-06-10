@@ -1,8 +1,7 @@
-// src/pages/ProductDetail.tsx
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { PRODUCTS_DATA } from '../data/products';
-import type { ProductPayment } from '../types/payments';
+import { CheckoutModal } from '../components/CheckoutModal';
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -10,14 +9,14 @@ export function ProductDetail() {
   // 1. Busca o produto correspondente
   const product = PRODUCTS_DATA.find((p) => p.id === id);
 
-  // 2. Controla apenas a imagem que o usuário CLICOU explicitamente
+  // 2. Estados de interface e imagem ativa
   const [userSelectedImage, setUserSelectedImage] = useState<string | null>(null);
   const [prevId, setPrevId] = useState(id);
   
-  // Estado para travar o botão e evitar duplo clique no envio da API
-  const [isProcessing, setIsProcessing] = useState(false);
+  // Controle de estado do novo Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 3. Se o ID da URL mudou, resetamos a seleção do usuário direto no fluxo de renderização
+  // 3. Reseta seleção se mudar de produto na mesma rota
   if (id !== prevId) {
     setPrevId(id);
     setUserSelectedImage(null);
@@ -26,69 +25,15 @@ export function ProductDetail() {
   // Guard de segurança simplificado
   if (!product) return null;
 
-  // 4. Estado Derivado: Se o usuário não clicou em nada, o padrão é a primeira imagem do produto
+  // 4. Estado Derivado da Imagem Principal
   const activeImage = userSelectedImage || (product.images[0] || product.mainImage || '');
 
-  // Configuração simplificada do WhatsApp da Oficina
+  // Configuração do WhatsApp da Oficina
   const WHATSAPP_NUMBER = '5511999999999'; 
   const whatsappMessage = encodeURIComponent(
     `Olá! Gostaria de tirar dúvidas sobre o capacete ${product.name} (Código Único: ${product.code}).`
   );
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
-
-    // Gatilho de disparo do Mercado Pago (Versão Diagnóstico)
-    const handlePayment = async () => {
-      console.log(' [F12 DIAGNÓSTICO]: 1. Você clicou no botão!');
-      
-      if (isProcessing) {
-        console.log(' [F12 DIAGNÓSTICO]: 1.1 Clique bloqueado porque isProcessing já é TRUE');
-        return;
-      }
-      
-      setIsProcessing(true);
-      console.log(' [F12 DIAGNÓSTICO]: 2. isProcessing mudou para true. Dados do produto atual:', product);
-      
-      try {
-        const paymentPayload: ProductPayment = {
-          id: product.id,
-          title: product.name,
-          price: Number(product.price)
-        };
-        console.log(' [F12 DIAGNÓSTICO]: 3. Payload estruturado com sucesso:', paymentPayload);
-
-        console.log(' [F12 DIAGNÓSTICO]: 4. Disparando FETCH para /api/checkout...');
-        const response = await fetch('/api/checkout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ product: paymentPayload })
-        });
-
-        console.log(' [F12 DIAGNÓSTICO]: 5. Resposta da rede recebida! HTTP Status:', response.status);
-        const data = await response.json();
-        console.log(' [F12 DIAGNÓSTICO]: 6. JSON decodificado do servidor:', data);
-
-        if (!response.ok) {
-          console.log(' [F12 DIAGNÓSTICO]: 6.1 Servidor respondeu com erro controlado.');
-          throw new Error(data.error || 'Erro na requisição');
-        }
-
-        if (data.initPoint) {
-          console.log(' [F12 DIAGNÓSTICO]: 7. Link encontrado! Redirecionando para:', data.initPoint);
-          window.location.href = data.initPoint;
-        } else {
-          console.log(' [F12 DIAGNÓSTICO]: 7.1 Erro: data.initPoint veio vazio.');
-          alert('Não foi possível gerar o link de pagamento.');
-          setIsProcessing(false);
-        }
-
-      } catch (error) {
-        console.error(' [F12 DIAGNÓSTICO ERRO CRÍTICO]:', error);
-        alert('Erro ao conectar com o servidor de pagamentos.');
-        setIsProcessing(false);
-      }
-    };
 
   return (
     <div className="w-full min-h-screen bg-zinc-950 text-white py-24 select-none flex items-center">
@@ -190,19 +135,16 @@ export function ProductDetail() {
 
           {/* AÇÕES DE ENGAJAMENTO */}
           <div className="w-full flex flex-col gap-3">
-            {/* Botão de Disparo do Mercado Pago */}
+            {/* Botão Modificado para disparar o Modal */}
             <button 
-              onClick={handlePayment}
-              disabled={isProcessing}
-              className="w-full text-center px-10 py-5 bg-amber-500 hover:bg-amber-400 disabled:bg-zinc-900 disabled:text-zinc-600 font-black uppercase tracking-widest text-xs transition-all duration-300 shadow-2xl flex items-center justify-center gap-2 group text-zinc-950 disabled:border disabled:border-zinc-800"
+              onClick={() => setIsModalOpen(true)}
+              className="w-full text-center px-10 py-5 bg-amber-500 hover:bg-amber-400 font-black uppercase tracking-widest text-xs transition-all duration-300 shadow-2xl flex items-center justify-center gap-2 group text-zinc-950"
             >
-              {isProcessing ? 'Gerando Pedido...' : 'Comprar agora (Pix / Cartão)'}
-              {!isProcessing && (
-                <span className="transform group-hover:translate-x-1 transition-transform duration-300 text-sm font-bold">→</span>
-              )}
+              Comprar agora (Pix / Cartão)
+              <span className="transform group-hover:translate-x-1 transition-transform duration-300 text-sm font-bold">→</span>
             </button>
 
-            {/* Canal Secundário: WhatsApp como escape */}
+            {/* Canal Secundário */}
             <a 
               href={whatsappUrl}
               target="_blank"
@@ -215,6 +157,17 @@ export function ProductDetail() {
 
         </div>
       </div>
+
+      {/* COMPONENTE DO MODAL ACOPLADO FLUTUANTE */}
+      <CheckoutModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        product={{
+          id: product.id,
+          name: product.name,
+          price: Number(product.price)
+        }}
+      />
     </div>
   );
 }
