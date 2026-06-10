@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { PRODUCTS_DATA } from '../data/products';
-import { mercadoPagoService } from '../services/MercadoPago'; // <- Seu serviço importado limpo
+import type { ProductPayment } from '../types/payments';
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -37,21 +37,48 @@ export function ProductDetail() {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
 
   // Gatilho de disparo do Mercado Pago
-  const handlePayment = async () => {
-    if (isProcessing) return;
-    
-    setIsProcessing(true);
-    try {
-      await mercadoPagoService.initCheckoutPro({
-        id: product.id,
-        title: product.name,
-        price: Number(product.price)
-      });
-    } finally {
-      // Libera o botão independente de dar sucesso ou chabu
-      setIsProcessing(false);
-    }
-  };
+    const handlePayment = async () => {
+      if (isProcessing) return; // Evita cliques duplos acidentais
+      
+      setIsProcessing(true);
+      
+      try {
+        // Criamos o objeto exatamente no formato que o backend e a interface esperam
+        const paymentPayload: ProductPayment = {
+          id: product.id,
+          title: product.name, // ← Pega o 'name' do produto e joga na propriedade 'title'
+          price: Number(product.price) // Garante que vai como número
+        };
+
+        // Dispara para o seu próprio servidor Express (Railway)
+        const response = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ product: paymentPayload }) // Envia o payload correto
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Erro na requisição');
+        }
+
+        // PULO DO GATO: Se o link direto existe, redireciona o usuário na mesma aba
+        if (data.initPoint) {
+          window.location.href = data.initPoint;
+        } else {
+          alert('Não foi possível gerar o link de pagamento.');
+          setIsProcessing(false);
+        }
+
+      } catch (error) {
+        console.error('Erro ao processar o pagamento no front:', error);
+        alert('Erro ao conectar com o servidor de pagamentos.');
+        setIsProcessing(false);
+      }
+    };
 
   return (
     <div className="w-full min-h-screen bg-zinc-950 text-white py-24 select-none flex items-center">

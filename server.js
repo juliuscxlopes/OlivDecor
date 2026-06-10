@@ -40,7 +40,11 @@ app.post('/api/checkout', async (req, res) => {
       return res.status(mpResponse.status).json({ error: 'Mercado Pago recusou a criação da preferência.' });
     }
 
-    return res.json({ preferenceId: data.id });
+    // ALTERAÇÃO AQUI: Agora devolvemos o ID E o link direto de pagamento (initPoint)
+    return res.json({ 
+      preferenceId: data.id,
+      initPoint: data.init_point 
+    });
 
   } catch (error) {
     // TRAVA 2: Se o servidor cair por erro de código/rede, printa o erro real no log
