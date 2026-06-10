@@ -55,7 +55,7 @@ app.post('/api/checkout', async (req, res) => {
 app.use(express.static('dist'));
 
 // Resguarda as rotas do React Router (F5 em qualquer página)
-app.get('*', (req, res) => {
+app.get('.*', (req, res) => {
   res.sendFile(path.resolve('dist', 'index.html'));
 });
 
